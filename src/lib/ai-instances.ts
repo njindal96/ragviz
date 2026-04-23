@@ -19,26 +19,16 @@ export class LocalAISingleton {
         }
 
         if (this.instance === null) {
-            console.log(`[LocalAISingleton] Initializing pipeline: ${this.model}...`);
-            const transformers = await import('@xenova/transformers');
-            
-            // Check for both named and default exports depending on the environment
-            const pipeline = transformers.pipeline || (transformers as any).default?.pipeline;
-            const env = transformers.env || (transformers as any).default?.env;
+            console.log(`[LocalAISingleton] Loading pipeline: ${this.model}...`);
+            // Use dynamic import — webpack fallbacks (in next.config.ts) ensure
+            // Node-only built-ins (fs, path, onnxruntime-node) are stubbed out
+            // in the browser bundle so this import resolves correctly via WASM.
+            const { pipeline } = await import('@xenova/transformers');
 
-            if (!pipeline) {
-                throw new Error('Failed to load Transformers.js: pipeline is undefined');
-            }
-            
-            if (env) {
-                // Configuration for browser environment
-                env.allowLocalModels = false; 
-            }
-            
-            this.instance = pipeline(this.task as any, this.model, { 
+            this.instance = pipeline(this.task as any, this.model, {
                 progress_callback: (info: any) => {
                     if (progressCallback && info) progressCallback(info);
-                } 
+                }
             });
         }
         return this.instance;
