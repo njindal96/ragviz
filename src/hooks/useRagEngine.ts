@@ -136,13 +136,13 @@ export function useRagEngine() {
             await new Promise(resolve => setTimeout(resolve, 50));
 
             const extractor = await LocalAISingleton.getInstance((info: any) => {
-                if (info.status === 'progress') {
+                if (info && info.status === 'progress') {
                     setProgress({ 
-                        current: Math.round(info.loaded), 
-                        total: Math.round(info.total), 
-                        status: `Downloading Model: ${info.file}...` 
+                        current: Math.round(info.loaded || 0), 
+                        total: Math.round(info.total || 100), 
+                        status: `Downloading Model: ${info.file || '...'}` 
                     });
-                } else if (info.status === 'ready') {
+                } else if (info && info.status === 'ready') {
                     setProgress({ current: 0, total: chunks.length, status: 'Model Ready. Starting Indexing...' });
                 }
             });
@@ -155,7 +155,13 @@ export function useRagEngine() {
             setProgress({ current: 0, total: totalToCompute, status: 'Indexing Chunks...' });
 
             for (let i = 0; i < newChunks.length; i++) {
-                if (!newChunks[i].embedding || allHaveEmbeddings) {
+                const chunk = newChunks[i];
+                if (!chunk) {
+                    console.warn(`[useRagEngine] Chunk at index ${i} is undefined!`);
+                    continue;
+                }
+
+                if (!chunk.embedding || allHaveEmbeddings) {
                     // Update progress for every chunk
                     setProgress({ 
                         current: computedCount + 1, 
@@ -168,7 +174,20 @@ export function useRagEngine() {
                         await new Promise(resolve => setTimeout(resolve, 0));
                     }
 
-                    const output = await extractor(newChunks[i].text, { pooling: 'mean', normalize: true });
+                    console.log(`[useRagEngine] Extracting embedding for chunk ${i}... Text length: ${chunk.text?.length}`);
+                    
+                    if (!chunk.text) {
+                        console.error(`[useRagEngine] Chunk ${i} has no text!`, chunk);
+                        computedCount++;
+                        continue;
+                    }
+
+                    const output = await extractor(chunk.text, { pooling: 'mean', normalize: true });
+                    
+                    if (!output || !output.data) {
+                        throw new Error(`AI Engine returned invalid output for chunk ${i}`);
+                    }
+
                     newChunks[i].embedding = Array.from(output.data);
                     computedCount++;
                 }

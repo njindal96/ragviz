@@ -20,14 +20,24 @@ export class LocalAISingleton {
 
         if (this.instance === null) {
             console.log(`[LocalAISingleton] Initializing pipeline: ${this.model}...`);
-            const { pipeline, env } = await import('@xenova/transformers');
+            const transformers = await import('@xenova/transformers');
             
-            // Configuration for browser environment
-            env.allowLocalModels = false; // Force fetching from remote if not local
+            // Check for both named and default exports depending on the environment
+            const pipeline = transformers.pipeline || (transformers as any).default?.pipeline;
+            const env = transformers.env || (transformers as any).default?.env;
+
+            if (!pipeline) {
+                throw new Error('Failed to load Transformers.js: pipeline is undefined');
+            }
+            
+            if (env) {
+                // Configuration for browser environment
+                env.allowLocalModels = false; 
+            }
             
             this.instance = pipeline(this.task as any, this.model, { 
                 progress_callback: (info: any) => {
-                    if (progressCallback) progressCallback(info);
+                    if (progressCallback && info) progressCallback(info);
                 } 
             });
         }

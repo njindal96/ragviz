@@ -121,9 +121,13 @@ export async function semanticChunkText(text: string, sensitivity: number): Prom
             // For simplicity, we skip full embedding aggregation and re-embed chunk later if needed,
             // or we could average them here. Let's average them.
             const chunkEmbeddings = embeddings.slice(currentChunkStartIdx, currentSentenceIdx + 1);
-            const averagedEmbedding = chunkEmbeddings[0].map((_, col) =>
-                chunkEmbeddings.reduce((sum, row) => sum + row[col], 0) / chunkEmbeddings.length
-            );
+            
+            let averagedEmbedding: number[] | undefined = undefined;
+            if (chunkEmbeddings.length > 0 && chunkEmbeddings[0]) {
+                averagedEmbedding = chunkEmbeddings[0].map((_, col) =>
+                    chunkEmbeddings.reduce((sum, row) => sum + (row?.[col] || 0), 0) / chunkEmbeddings.length
+                );
+            }
 
             chunks.push({
                 id: generateId(),
