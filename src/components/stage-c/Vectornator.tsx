@@ -1,6 +1,7 @@
 'use client';
 
 import { Loader2, Zap, CheckCircle2 } from 'lucide-react';
+import { InfoTooltip } from '@/components/InfoTooltip';
 
 interface VectornatorProps {
     onComputeEmbeddings: () => void;
@@ -50,7 +51,10 @@ export function Vectornator({ onComputeEmbeddings, isProcessing, progress, hasCh
                                 {progress?.status?.includes('Downloading') ? 'Downloading AI Model...' : 'Vectorizing...'}
                             </>
                         ) : (
-                            'Start Embedding Process (Browser-Side)'
+                            <span className="flex items-center gap-2">
+                                Start Embedding Process
+                                <InfoTooltip content="An embedding is a list of ~384 numbers that represents the meaning of the text. Similar texts produce similar numbers, allowing us to find related chunks by comparing vectors." />
+                            </span>
                         )}
                     </button>
                 )}

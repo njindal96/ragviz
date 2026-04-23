@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ChunkParams, RagChunk } from '@/hooks/useRagEngine';
 import { Settings2, Scissors, Zap, MousePointerClick, BarChart3, Info, FileText, AlertCircle, X, Check } from 'lucide-react';
+import { InfoTooltip } from '@/components/InfoTooltip';
 import clsx from 'clsx';
 
 interface ChunkVisualizerProps {
@@ -180,7 +181,10 @@ export function ChunkVisualizer({
                         </h4>
 
                         <div className="flex items-center justify-between">
-                            <label htmlFor="pipeline-config-semantic" className="text-sm font-medium text-gray-700">Semantic Merging</label>
+                            <label htmlFor="pipeline-config-semantic" className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                                Semantic Merging
+                                <InfoTooltip content="Uses AI to decide where to split text based on meaning changes, not just character count. Chunks will share a topic rather than being arbitrarily cut." />
+                            </label>
                             <input
                                 id="pipeline-config-semantic"
                                 type="checkbox"
@@ -216,7 +220,10 @@ export function ChunkVisualizer({
                         <div className="space-y-4">
                             <div className="space-y-1">
                                 <div className="flex justify-between text-xs text-gray-500">
-                                    <label htmlFor="pipeline-config-size">Max Chunk Size</label>
+                                    <label htmlFor="pipeline-config-size" className="flex items-center gap-1">
+                                        Max Chunk Size
+                                        <InfoTooltip content="How many characters fit in each chunk. Smaller = more precise retrieval. Larger = more context per chunk. 200–500 chars is a common sweet spot." />
+                                    </label>
                                     <span className="font-mono">{localParams.size} chars</span>
                                 </div>
                                 <input
@@ -232,7 +239,10 @@ export function ChunkVisualizer({
                             </div>
                             <div className="space-y-1">
                                 <div className="flex justify-between text-xs text-gray-500">
-                                    <label htmlFor="pipeline-config-overlap">Overlap</label>
+                                    <label htmlFor="pipeline-config-overlap" className="flex items-center gap-1">
+                                        Overlap
+                                        <InfoTooltip content="How many characters are shared between adjacent chunks. Overlap prevents important context from being split across a boundary and lost." />
+                                    </label>
                                     <span className="font-mono">{localParams.overlap} chars</span>
                                 </div>
                                 <input
