@@ -24,7 +24,7 @@ export function useRagEngine() {
     const [query, setQuery] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [stage, setStage] = useState<'PARSING' | 'CHUNKING' | 'INDEXING' | 'RETRIEVAL'>('PARSING');
-    const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
+    const [progress, setProgress] = useState<{ current: number; total: number; status?: string } | null>(null);
 
     // Default parameters
     const [params, setParams] = useState<ChunkParams>({
@@ -129,29 +129,43 @@ export function useRagEngine() {
         console.log('[useRagEngine] computeEmbeddings started. Chunks:', chunks.length);
         setIsProcessing(true);
         setStage('INDEXING');
+        setProgress({ current: 0, total: chunks.length, status: 'Initializing AI Engine...' });
 
         try {
-            // Yield to main thread so React can render the "Vectorizing..." UI before heavy WASM work
+            // Yield to main thread so React can render the "Vectorizing..." UI
             await new Promise(resolve => setTimeout(resolve, 50));
 
-            const extractor = await LocalAISingleton.getInstance();
-            const newChunks = [...chunks];
+            const extractor = await LocalAISingleton.getInstance((info: any) => {
+                if (info.status === 'progress') {
+                    setProgress({ 
+                        current: Math.round(info.loaded), 
+                        total: Math.round(info.total), 
+                        status: `Downloading Model: ${info.file}...` 
+                    });
+                } else if (info.status === 'ready') {
+                    setProgress({ current: 0, total: chunks.length, status: 'Model Ready. Starting Indexing...' });
+                }
+            });
 
+            const newChunks = [...chunks];
             const allHaveEmbeddings = newChunks.every(c => c.embedding);
             let computedCount = 0;
             const totalToCompute = allHaveEmbeddings ? newChunks.length : newChunks.filter(c => !c.embedding).length;
 
-            if (totalToCompute > 0) {
-                setProgress({ current: 0, total: totalToCompute });
-            }
+            setProgress({ current: 0, total: totalToCompute, status: 'Indexing Chunks...' });
 
             for (let i = 0; i < newChunks.length; i++) {
                 if (!newChunks[i].embedding || allHaveEmbeddings) {
-                    setProgress({ current: computedCount + 1, total: totalToCompute });
+                    // Update progress for every chunk
+                    setProgress({ 
+                        current: computedCount + 1, 
+                        total: totalToCompute, 
+                        status: `Vectorizing Chunk ${computedCount + 1}/${totalToCompute}` 
+                    });
 
-                    // Yield occasionally to prevent UI freezing during large generic arrays
-                    if (computedCount > 0 && computedCount % 5 === 0) {
-                        await new Promise(resolve => setTimeout(resolve, 10));
+                    // Yield occasionally to prevent UI freezing
+                    if (computedCount % 5 === 0) {
+                        await new Promise(resolve => setTimeout(resolve, 0));
                     }
 
                     const output = await extractor(newChunks[i].text, { pooling: 'mean', normalize: true });
@@ -160,14 +174,11 @@ export function useRagEngine() {
                 }
             }
 
-            // Just in case we did 0 work, wait briefly to ensure UI flashed properly
-            if (computedCount === 0) {
-                await new Promise(resolve => setTimeout(resolve, 300));
-            }
-
             setChunks(newChunks);
-        } catch (error) {
-            console.error('Embedding failed', error);
+            console.log('[useRagEngine] Indexing completed successfully.');
+        } catch (error: any) {
+            console.error('Embedding failed:', error);
+            alert(`Vector Indexing failed: ${error.message || 'Unknown error'}`);
         } finally {
             setIsProcessing(false);
             setProgress(null);

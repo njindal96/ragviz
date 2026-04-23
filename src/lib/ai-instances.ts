@@ -19,8 +19,17 @@ export class LocalAISingleton {
         }
 
         if (this.instance === null) {
-            const { pipeline } = await import('@xenova/transformers');
-            this.instance = pipeline(this.task as any, this.model, { progress_callback: progressCallback });
+            console.log(`[LocalAISingleton] Initializing pipeline: ${this.model}...`);
+            const { pipeline, env } = await import('@xenova/transformers');
+            
+            // Configuration for browser environment
+            env.allowLocalModels = false; // Force fetching from remote if not local
+            
+            this.instance = pipeline(this.task as any, this.model, { 
+                progress_callback: (info: any) => {
+                    if (progressCallback) progressCallback(info);
+                } 
+            });
         }
         return this.instance;
     }

@@ -5,7 +5,7 @@ import { Loader2, Zap, CheckCircle2 } from 'lucide-react';
 interface VectornatorProps {
     onComputeEmbeddings: () => void;
     isProcessing: boolean;
-    progress: { current: number; total: number } | null;
+    progress: { current: number; total: number; status?: string } | null;
     hasChunks: boolean;
     isIndexed: boolean;
 }
@@ -14,10 +14,15 @@ export function Vectornator({ onComputeEmbeddings, isProcessing, progress, hasCh
     return (
         <div className="w-full">
             {progress && (
-                <div className="flex justify-end mb-2">
-                    <span className="text-sm text-gray-600 font-mono">
-                        {progress.current} / {progress.total} chunks
-                    </span>
+                <div className="flex flex-col gap-1 mb-2">
+                    <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-500 italic font-medium truncate max-w-[200px]">
+                            {progress.status || 'Processing...'}
+                        </span>
+                        <span className="text-gray-600 font-mono">
+                            {progress.current} / {progress.total}
+                        </span>
+                    </div>
                 </div>
             )}
 
@@ -42,7 +47,7 @@ export function Vectornator({ onComputeEmbeddings, isProcessing, progress, hasCh
                         {isProcessing ? (
                             <>
                                 <Loader2 className="w-4 h-4 animate-spin" />
-                                Vectorizing...
+                                {progress?.status?.includes('Downloading') ? 'Downloading AI Model...' : 'Vectorizing...'}
                             </>
                         ) : (
                             'Start Embedding Process (Browser-Side)'
