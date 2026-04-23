@@ -10,16 +10,25 @@ export async function parsePdfAction(formData: FormData): Promise<string> {
   const buffer = Buffer.from(await file.arrayBuffer());
 
   // Use dynamic import to avoid build-time bundling issues with pdf-parse
-  // which can have issues with some Next.js/Webpack configurations
+  // which can have issues with some Next.js/Webpack configurations.
+  // We also import CanvasFactory specifically for Vercel/Serverless environments.
+  const { CanvasFactory } = await import('pdf-parse/worker');
   const { PDFParse } = await import('pdf-parse');
 
   // Debug logs
   console.log('[Server] Parsing PDF, buffer size:', buffer.length);
-  const parser = new PDFParse({ data: buffer });
-  const data = await parser.getText();
-  await parser.destroy();
-  console.log('[Server] Extracted text length:', data.text.length);
-  return data.text;
+  const parser = new PDFParse({ 
+    data: new Uint8Array(buffer), 
+    CanvasFactory 
+  });
+  
+  try {
+    const data = await parser.getText();
+    console.log('[Server] Extracted text length:', data.text.length);
+    return data.text;
+  } finally {
+    await parser.destroy();
+  }
 }
 
 export async function generateAnswerAction(query: string, context: string) {
