@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ragie-Lite",
+  title: "RAG Visualizer",
   description: "A transparent RAG workbench for visualizing the RAG pipeline.",
 };
 

@@ -36,9 +36,9 @@ export default function Home() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
               <Layers className="w-8 h-8 text-indigo-600" />
-              Ragie-Lite
+              RAG Visualizer
             </h1>
-            <p className="text-gray-500 mt-1">Brute-Force Client-Side RAG Workbench</p>
+            <p className="text-gray-500 mt-1">Play tool to visualize how RAG works</p>
           </div>
           <div className="flex items-center gap-4 text-sm font-medium text-gray-400">
             <div className="flex items-center gap-1">
